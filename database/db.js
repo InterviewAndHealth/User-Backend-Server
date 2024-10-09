@@ -1,5 +1,5 @@
 const { Pool } = require("pg");
-const { PGUSER, PGPASSWORD, PGHOST, PGPORT, PGDATABASE } = require("../config");
+const { DATABASE_URL, DATABASE_NAME, NODE_ENV } = require("../config");
 const path = require("path");
 const fs = require("fs");
 
@@ -10,14 +10,9 @@ class DB {
   static async connect() {
     if (!this.#pool) {
       this.#pool = new Pool({
-        user: PGUSER,
-        password: PGPASSWORD,
-        host: PGHOST,
-        port: PGPORT,
-        database: PGDATABASE,
-        ssl: {
-          rejectUnauthorized: false,
-        },
+        connectionString: `${DATABASE_URL}/${DATABASE_NAME}`,
+        // ssl: NODE_ENV === "production" ? { rejectUnauthorized: false } : false,
+        ssl: false,
       });
 
       this.#pool.on("error", (err) => {
@@ -44,11 +39,11 @@ class DB {
     const pathToSQL = path.join(__dirname, "queries", "create.sql");
     const rawQuery = fs.readFileSync(pathToSQL).toString();
 
-    const queries = rawQuery.split(';');
+    const queries = rawQuery.split(";");
 
     const processedQueries = queries
-      .filter(query => query.trim() !== '')
-      .map(query => query.replace(/\n/g, "").replace(/\s+/g, " "));
+      .filter((query) => query.trim() !== "")
+      .map((query) => query.replace(/\n/g, "").replace(/\s+/g, " "));
 
     const query = rawQuery.replace(/\n/g, "").replace(/\s+/g, " ");
     return this.#pool.query(query);
@@ -61,17 +56,15 @@ class DB {
     return this.#pool.query(query);
   }
 
-
   static async createStudentTable() {
     const pathToSQL = path.join(__dirname, "queries", "createStudent.sql");
     const rawQuery = fs.readFileSync(pathToSQL).toString();
 
-
-    const queries = rawQuery.split(';');
+    const queries = rawQuery.split(";");
 
     const processedQueries = queries
-      .filter(query => query.trim() !== '')
-      .map(query => query.replace(/\n/g, "").replace(/\s+/g, " "));
+      .filter((query) => query.trim() !== "")
+      .map((query) => query.replace(/\n/g, "").replace(/\s+/g, " "));
 
     const query = rawQuery.replace(/\n/g, "").replace(/\s+/g, " ");
 
